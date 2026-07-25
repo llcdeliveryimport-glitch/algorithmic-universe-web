@@ -12,12 +12,12 @@ import {
 } from "../src/collider.js";
 import {
   COLLISION_SYSTEMS,
-  PROFILE_CATALOG,
   generateGlauberEvent,
 } from "../src/glauber.js";
+import { NUCLEAR_PROFILE_METADATA, normalizeGlauberEvent } from "../src/model-v06.js";
 
 test("every extended nucleus has source and approximation metadata", () => {
-  for (const profile of Object.values(PROFILE_CATALOG)) {
+  for (const profile of Object.values(NUCLEAR_PROFILE_METADATA)) {
     assert.ok(profile.source);
     assert.ok(profile.approximation);
   }
@@ -48,7 +48,7 @@ test("event integrity validator detects channel corruption", () => {
 test("low-participant shape observables are explicitly undefined", () => {
   let event = null;
   for (let trialId = 0; trialId < 1000; trialId += 1) {
-    const candidate = generateGlauberEvent({ systemKey: "OO", seed: 20260725, trialId, impactParameterFm: 7 });
+    const candidate = normalizeGlauberEvent(generateGlauberEvent({ systemKey: "OO", seed: 20260725, trialId, impactParameterFm: 7 }));
     if (candidate.metrics.nPart === 2) { event = candidate; break; }
   }
   assert.ok(event, "expected to find a two-participant peripheral event");
