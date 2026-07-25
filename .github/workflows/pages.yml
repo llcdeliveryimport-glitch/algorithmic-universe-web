@@ -35,11 +35,15 @@ jobs:
           test -f nuclear.css
           test -f src/glauber.js
           test -f src/collider.js
+          test -f src/model-v06.js
           test -f src/nuclear-app.js
           test -f src/nuclear-analysis.js
           test -f validation/v0.6-reference.json
+          grep -q "Nuclear Web v0.6" nuclear.html
+          grep -q "Серія подій і статистика" nuclear.html
           node --check src/glauber.js
           node --check src/collider.js
+          node --check src/model-v06.js
           node --check src/nuclear-app.js
           node --check src/nuclear-analysis.js
 
