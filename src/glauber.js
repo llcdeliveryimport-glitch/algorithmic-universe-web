@@ -62,6 +62,7 @@ export const COLLISION_SYSTEMS = Object.freeze({
     sqrtSnnGev: 9620,
     defaultSigmaMb: 72,
     bMaxFm: 12,
+    geometryPresetsFm: { central: 0, mid: 2.8, edge: 5.2 },
   },
   OO: {
     key: "OO",
@@ -71,6 +72,7 @@ export const COLLISION_SYSTEMS = Object.freeze({
     sqrtSnnGev: 5360,
     defaultSigmaMb: 68,
     bMaxFm: 15,
+    geometryPresetsFm: { central: 0, mid: 4.0, edge: 7.0 },
   },
   NeNe: {
     key: "NeNe",
@@ -80,6 +82,7 @@ export const COLLISION_SYSTEMS = Object.freeze({
     sqrtSnnGev: 5360,
     defaultSigmaMb: 68,
     bMaxFm: 16,
+    geometryPresetsFm: { central: 0, mid: 4.5, edge: 8.0 },
   },
   PbPb: {
     key: "PbPb",
@@ -89,6 +92,7 @@ export const COLLISION_SYSTEMS = Object.freeze({
     sqrtSnnGev: 5360,
     defaultSigmaMb: 68,
     bMaxFm: 25,
+    geometryPresetsFm: { central: 0, mid: 7.0, edge: 13.0 },
   },
 });
 
@@ -355,7 +359,7 @@ export function generateGlauberEvent({
 
   return {
     model: "classical-monte-carlo-glauber-browser-baseline",
-    version: "0.4-web-preview",
+    version: "0.5-web-preview",
     system,
     seed: Number(seed),
     trialId: Number(trialId),
@@ -382,6 +386,37 @@ export function generateGlauberEvent({
       participantAreaFm2: participantArea(participants),
     },
   };
+}
+
+export function generateAcceptedGlauberEvent({
+  systemKey = "OO",
+  seed = 20260725,
+  trialId = 0,
+  impactParameterFm = null,
+  sigmaMb = null,
+  maxAttempts = 5000,
+} = {}) {
+  if (!Number.isInteger(maxAttempts) || maxAttempts <= 0) {
+    throw new Error("maxAttempts must be a positive integer");
+  }
+  const startTrialId = Number(trialId);
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const event = generateGlauberEvent({
+      systemKey,
+      seed,
+      trialId: startTrialId + attempt,
+      impactParameterFm,
+      sigmaMb,
+    });
+    if (event.accepted) {
+      return {
+        ...event,
+        searchAttempts: attempt + 1,
+        searchStartTrialId: startTrialId,
+      };
+    }
+  }
+  throw new Error(`No accepted event found in ${maxAttempts} attempts`);
 }
 
 export function serializeEvent(event) {
