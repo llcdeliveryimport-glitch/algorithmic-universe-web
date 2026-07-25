@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Інтерактивна цифрова лабораторія Algorithmic Universe.">
+  <title>Algorithmic Universe — веблабораторія</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Цифрова фізична лабораторія</p>
+        <h1>Algorithmic Universe</h1>
+        <p class="subtitle">Керуй частинками, змінюй параметри зіткнень і в реальному часі перевіряй збереження імпульсу та енергії.</p>
+      </div>
+      <span class="version-badge">Web v0.2</span>
+    </header>
+
+    <section class="dashboard" aria-label="Панель цифрової лабораторії">
+      <aside class="panel" aria-labelledby="controlsHeading">
+        <h2 id="controlsHeading">Керування експериментом</h2>
+
+        <div class="control-group">
+          <label class="control-label" for="particleCount"><span>Кількість частинок</span><span id="particleCountValue" class="control-value">8</span></label>
+          <input id="particleCount" type="range" min="2" max="30" step="1" value="8">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="restitution"><span>Пружність зіткнень</span><span id="restitutionValue" class="control-value">1.00</span></label>
+          <input id="restitution" type="range" min="0" max="1" step="0.05" value="1">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="timeScale"><span>Швидкість часу</span><span id="timeScaleValue" class="control-value">1.0×</span></label>
+          <input id="timeScale" type="range" min="0.1" max="3" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="seed"><span>Seed експерименту</span></label>
+          <input id="seed" type="number" min="0" step="1" value="20260725">
+        </div>
+
+        <div class="button-grid">
+          <button id="runButton" class="primary" type="button">Запустити</button>
+          <button id="stepButton" type="button">Один крок</button>
+          <button id="resetButton" type="button">Скинути</button>
+          <button id="addParticleButton" type="button">+ Частинка</button>
+          <button id="exportButton" class="wide" type="button">Експортувати JSON</button>
+        </div>
+
+        <p class="note">Однаковий seed створює однаковий початковий стан. Це дозволяє точно повторювати й порівнювати експерименти.</p>
+      </aside>
+
+      <section class="simulation-column" aria-labelledby="environmentHeading">
+        <h2 id="environmentHeading" hidden>Середовище симуляції</h2>
+        <div class="canvas-frame">
+          <canvas id="simulationCanvas" tabindex="0" aria-label="Двовимірне поле, у якому рухаються та стикаються частинки"></canvas>
+          <div class="canvas-caption">
+            <span class="legend-item"><span class="legend-dot"></span>нейтральна</span>
+            <span class="legend-item"><span class="legend-dot positive"></span>позитивний заряд</span>
+            <span class="legend-item"><span class="legend-dot negative"></span>негативний заряд</span>
+            <span>Натисни й перетягни частинку, щоб змінити її позицію.</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel right-panel" aria-labelledby="metricsHeading">
+        <h2 id="metricsHeading">Показники та об’єкти</h2>
+        <div class="panel-content">
+          <div>
+            <div class="metrics-grid">
+              <div class="metric"><div class="metric-label">Кінетична енергія</div><div id="energyMetric" class="metric-value">0.00</div><div class="metric-unit">умовних одиниць</div></div>
+              <div class="metric"><div class="metric-label">Модуль імпульсу</div><div id="momentumMetric" class="metric-value">0.00</div><div class="metric-unit">умовних одиниць</div></div>
+              <div class="metric"><div class="metric-label">Зіткнення</div><div id="collisionMetric" class="metric-value">0</div><div class="metric-unit">за запуск</div></div>
+              <div class="metric"><div class="metric-label">Похибка імпульсу</div><div id="driftMetric" class="metric-value">0.00e+0</div><div class="metric-unit">від старту</div></div>
+            </div>
+            <div id="statusText" class="status-box" aria-live="polite"></div>
+          </div>
+
+          <section id="particleEditor" class="editor" hidden aria-labelledby="selectedParticleName">
+            <h2>Частинка <span id="selectedParticleName"></span></h2>
+            <div class="editor-grid">
+              <label>Маса<input id="selectedMass" type="number" min="0.1" max="20" step="0.1"></label>
+              <label>Заряд<select id="selectedCharge"><option value="-1">−1</option><option value="0">0</option><option value="1">+1</option></select></label>
+              <label>Швидкість X<input id="selectedVx" type="number" step="1"></label>
+              <label>Швидкість Y<input id="selectedVy" type="number" step="1"></label>
+            </div>
+            <div class="editor-actions">
+              <button id="applyParticleButton" type="button">Застосувати</button>
+              <button id="removeParticleButton" class="danger" type="button">Видалити</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
