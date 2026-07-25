@@ -1,3 +1,4 @@
+import "./explanation-log.js";
 import { COLLISION_SYSTEMS } from "./glauber.js";
 import {
   MODEL_REFERENCES,
@@ -166,6 +167,7 @@ function renderBatch(summary) {
   batch.meanNcoll.textContent = numberOrDash(summary.means.nColl, 2);
   renderBatchTable(summary);
   resizeBatchChart();
+  window.dispatchEvent(new CustomEvent("glauber:batch", { detail: { summary } }));
 }
 
 async function runBatch() {
