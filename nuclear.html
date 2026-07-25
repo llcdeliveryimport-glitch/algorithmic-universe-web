@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Публічна візуалізація Monte Carlo Glauber для зіткнень p–O, O–O, Ne–Ne та Pb–Pb.">
+  <title>Algorithmic Universe — ядерна лабораторія</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./nuclear.css">
+</head>
+<body>
+  <main class="app-shell nuclear-shell">
+    <header class="app-header nuclear-header">
+      <div>
+        <p class="eyebrow">Monte Carlo Glauber · поперечна геометрія</p>
+        <h1>Ядерна лабораторія</h1>
+        <p class="subtitle">Досліджуй геометрію зіткнень реальних ядер: протони, нейтрони, учасники, спостерігачі та бінарні нуклонні зіткнення.</p>
+      </div>
+      <div class="header-actions">
+        <span class="version-badge">Nuclear Web v0.4</span>
+        <a class="nav-button" href="./index.html">Класична лабораторія</a>
+      </div>
+    </header>
+
+    <section class="science-notice">
+      <strong>Наукова межа:</strong> це браузерна візуалізація класичної геометрії Glauber. Вона ще не моделює кварки, глюони, QGP, адронізацію чи детектор CERN.
+    </section>
+
+    <section class="nuclear-dashboard">
+      <aside class="panel controls-panel" aria-labelledby="nuclearControlsHeading">
+        <h2 id="nuclearControlsHeading">Параметри події</h2>
+
+        <div class="control-group">
+          <label for="systemSelect">Система зіткнення</label>
+          <select id="systemSelect"></select>
+        </div>
+
+        <p id="systemDescription" class="system-description"></p>
+
+        <div class="control-group">
+          <label class="control-label" for="impactParameter"><span>Параметр удару b</span><span id="impactValue" class="control-value">випадково</span></label>
+          <input id="impactParameter" type="range" min="0" max="15" step="0.05" value="3">
+          <label class="checkbox-row"><input id="randomImpact" type="checkbox" checked> Генерувати b випадково з dP/db ∝ b</label>
+        </div>
+
+        <div class="control-group two-controls">
+          <label>σNN, mb<input id="sigmaMb" type="number" min="10" max="150" step="0.5" value="68"></label>
+          <label>Seed<input id="nuclearSeed" type="number" min="0" step="1" value="20260725"></label>
+        </div>
+
+        <div class="control-group">
+          <label>Номер події<input id="trialId" type="number" min="0" step="1" value="0"></label>
+        </div>
+
+        <div class="button-grid nuclear-buttons">
+          <button id="generateEvent" class="primary" type="button">Згенерувати</button>
+          <button id="nextEvent" type="button">Наступна подія</button>
+          <button id="exportNuclearEvent" class="wide" type="button">Експортувати JSON</button>
+        </div>
+
+        <div class="legend-list" aria-label="Легенда">
+          <span><i class="legend-circle proton"></i> протон-спостерігач</span>
+          <span><i class="legend-circle neutron"></i> нейтрон-спостерігач</span>
+          <span><i class="legend-circle participant"></i> нуклон-учасник</span>
+          <span><i class="legend-line collision"></i> бінарне зіткнення</span>
+        </div>
+      </aside>
+
+      <section class="simulation-column">
+        <div class="canvas-frame nuclear-canvas-frame">
+          <canvas id="nuclearCanvas" aria-label="Поперечна геометрія зіткнення двох ядер"></canvas>
+          <div class="canvas-caption">
+            <span>Вид уздовж осі пучка у момент найближчого проходження ядер.</span>
+            <span>Число всередині червоного нуклона — кількість його зіткнень.</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel metrics-panel" aria-labelledby="nuclearMetricsHeading">
+        <h2 id="nuclearMetricsHeading">Результат події</h2>
+        <div class="metrics-grid nuclear-metrics">
+          <div class="metric"><div class="metric-label">Npart</div><div id="nPartMetric" class="metric-value">0</div><div class="metric-unit">учасники</div></div>
+          <div class="metric"><div class="metric-label">Ncoll</div><div id="nCollMetric" class="metric-value">0</div><div class="metric-unit">зіткнення</div></div>
+          <div class="metric"><div class="metric-label">Spectators</div><div id="spectatorMetric" class="metric-value">0</div><div class="metric-unit">спостерігачі</div></div>
+          <div class="metric"><div class="metric-label">b</div><div id="bMetric" class="metric-value compact-value">0 fm</div><div class="metric-unit">impact parameter</div></div>
+          <div class="metric"><div class="metric-label">ε₂</div><div id="epsilon2Metric" class="metric-value">0</div><div class="metric-unit">еліптичність</div></div>
+          <div class="metric"><div class="metric-label">ε₃</div><div id="epsilon3Metric" class="metric-value">0</div><div class="metric-unit">трикутність</div></div>
+          <div class="metric"><div class="metric-label">Площа</div><div id="areaMetric" class="metric-value compact-value">0 fm²</div><div class="metric-unit">учасників</div></div>
+          <div class="metric"><div class="metric-label">pp / pn / nn</div><div id="channelsMetric" class="metric-value compact-value">0/0/0</div><div class="metric-unit">канали</div></div>
+        </div>
+        <div id="nuclearStatus" class="status-box" aria-live="polite"></div>
+
+        <section class="explanation-card">
+          <h3>Що ви бачите</h3>
+          <p>Кожне ядро заново генерується з фізично заданого профілю густини. Пари нуклонів взаємодіють, коли їхня поперечна відстань менша за радіус, визначений σNN.</p>
+          <p>Однакові <strong>seed</strong> і <strong>номер події</strong> точно повторюють конфігурацію.</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+  <script type="module" src="./src/nuclear-app.js"></script>
+</body>
+</html>
