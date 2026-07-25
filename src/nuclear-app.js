@@ -5,6 +5,12 @@ import {
   generateGlauberEvent,
   serializeEvent,
 } from "./glauber.js";
+import {
+  centralityLabel,
+  geometricCentralityPercent,
+  validateGlauberEvent,
+} from "./collider.js";
+import { normalizeGlauberEvent } from "./model-v06.js";
 
 const canvas = document.querySelector("#nuclearCanvas");
 const context = canvas.getContext("2d");
@@ -42,6 +48,8 @@ const metrics = {
   area: document.querySelector("#areaMetric"),
   b: document.querySelector("#bMetric"),
   channels: document.querySelector("#channelsMetric"),
+  centrality: document.querySelector("#centralityMetric"),
+  validation: document.querySelector("#validationMetric"),
 };
 const stageItems = [...document.querySelectorAll(".stage-item")];
 
@@ -49,6 +57,8 @@ let currentEvent = null;
 let animationStart = 0;
 let animationProgress = 1;
 let animationFrameId = null;
+let lastTransform = null;
+const tooltip = document.querySelector("#nucleonTooltip");
 
 function fillSystems() {
   for (const system of Object.values(COLLISION_SYSTEMS)) {
@@ -131,16 +141,10 @@ function drawGrid(width, height, scale, centerX, centerY) {
     const x = centerX + fm * scale;
     const y = centerY + fm * scale;
     if (x >= 0 && x <= width) {
-      context.beginPath();
-      context.moveTo(x, 0);
-      context.lineTo(x, height);
-      context.stroke();
+      context.beginPath(); context.moveTo(x, 0); context.lineTo(x, height); context.stroke();
     }
     if (y >= 0 && y <= height) {
-      context.beginPath();
-      context.moveTo(0, y);
-      context.lineTo(width, y);
-      context.stroke();
+      context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke();
     }
   }
   context.restore();
@@ -156,30 +160,18 @@ function envelopeRadius(profileKey) {
 function drawEnvelope(centerFm, profileKey, scale, centerX, centerY, side) {
   const radius = envelopeRadius(profileKey) * scale;
   const x = centerX + centerFm * scale;
-  const color = side === "projectile"
-    ? theme("--projectile", "#2563eb")
-    : theme("--target", "#7c3aed");
-  const soft = side === "projectile"
-    ? theme("--projectile-soft", "rgba(37,99,235,.1)")
-    : theme("--target-soft", "rgba(124,58,237,.1)");
+  const color = side === "projectile" ? theme("--projectile", "#2563eb") : theme("--target", "#7c3aed");
+  const soft = side === "projectile" ? theme("--projectile-soft", "rgba(37,99,235,.1)") : theme("--target-soft", "rgba(124,58,237,.1)");
   context.save();
-  context.beginPath();
-  context.arc(x, centerY, radius, 0, Math.PI * 2);
-  context.fillStyle = soft;
-  context.strokeStyle = color;
-  context.lineWidth = 2;
-  context.setLineDash([7, 6]);
-  context.fill();
-  context.stroke();
-  context.setLineDash([]);
-  context.fillStyle = color;
-  context.font = "700 13px system-ui";
-  context.textAlign = "center";
+  context.beginPath(); context.arc(x, centerY, radius, 0, Math.PI * 2);
+  context.fillStyle = soft; context.strokeStyle = color; context.lineWidth = 2;
+  context.setLineDash([7, 6]); context.fill(); context.stroke(); context.setLineDash([]);
+  context.fillStyle = color; context.font = "700 13px system-ui"; context.textAlign = "center";
   context.fillText(side === "projectile" ? "Ядро 1" : "Ядро 2", x, centerY - radius - 12);
   context.restore();
 }
 
-function drawImpactArrow(event, scale, centerX) {
+function drawImpactArrow(event, scale, centerX, centerY) {
   const x1 = centerX - event.impactParameterFm * scale / 2;
   const x2 = centerX + event.impactParameterFm * scale / 2;
   const y = 42;
@@ -188,20 +180,11 @@ function drawImpactArrow(event, scale, centerX) {
   context.fillStyle = context.strokeStyle;
   context.globalAlpha = 0.8;
   context.lineWidth = 1.5;
-  context.beginPath();
-  context.moveTo(x1, y);
-  context.lineTo(x2, y);
-  context.stroke();
+  context.beginPath(); context.moveTo(x1, y); context.lineTo(x2, y); context.stroke();
   for (const [x, direction] of [[x1, 1], [x2, -1]]) {
-    context.beginPath();
-    context.moveTo(x, y);
-    context.lineTo(x + 7 * direction, y - 4);
-    context.lineTo(x + 7 * direction, y + 4);
-    context.closePath();
-    context.fill();
+    context.beginPath(); context.moveTo(x, y); context.lineTo(x + 7 * direction, y - 4); context.lineTo(x + 7 * direction, y + 4); context.closePath(); context.fill();
   }
-  context.font = "700 12px system-ui";
-  context.textAlign = "center";
+  context.font = "700 12px system-ui"; context.textAlign = "center";
   context.fillText(`b = ${event.impactParameterFm.toFixed(2)} fm`, (x1 + x2) / 2, y - 9);
   context.restore();
 }
@@ -210,17 +193,13 @@ function drawCollisionRegion(event, scale, centerX, centerY, progress) {
   if (!event.accepted || progress < 0.35) return;
   const points = event.collisions.map((c) => ({ x: centerX + c.x * scale, y: centerY + c.y * scale }));
   const mean = points.reduce((s, p) => ({ x: s.x + p.x, y: s.y + p.y }), { x: 0, y: 0 });
-  mean.x /= points.length;
-  mean.y /= points.length;
+  mean.x /= points.length; mean.y /= points.length;
   const radius = Math.max(28, ...points.map((p) => Math.hypot(p.x - mean.x, p.y - mean.y)) + 18);
   context.save();
   const gradient = context.createRadialGradient(mean.x, mean.y, 0, mean.x, mean.y, radius);
   gradient.addColorStop(0, `rgba(249,115,22,${0.18 * progress})`);
   gradient.addColorStop(1, "rgba(249,115,22,0)");
-  context.fillStyle = gradient;
-  context.beginPath();
-  context.arc(mean.x, mean.y, radius, 0, Math.PI * 2);
-  context.fill();
+  context.fillStyle = gradient; context.beginPath(); context.arc(mean.x, mean.y, radius, 0, Math.PI * 2); context.fill();
   context.restore();
 }
 
@@ -244,9 +223,9 @@ function drawCollisionLines(event, scale, centerX, centerY, progress) {
 }
 
 function roundedSquare(x, y, radius) {
-  const corner = radius * 0.34;
+  const r = radius * 0.34;
   context.beginPath();
-  context.roundRect(x - radius, y - radius, radius * 2, radius * 2, corner);
+  context.roundRect(x - radius, y - radius, radius * 2, radius * 2, r);
 }
 
 function drawNucleon(nucleon, scale, centerX, centerY, progress) {
@@ -257,8 +236,7 @@ function drawNucleon(nucleon, scale, centerX, centerY, progress) {
   const isParticipant = nucleon.collisions > 0;
   context.save();
   if (nucleon.type === "proton") {
-    context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.beginPath(); context.arc(x, y, radius, 0, Math.PI * 2);
   } else {
     roundedSquare(x, y, radius * 0.88);
   }
@@ -266,24 +244,17 @@ function drawNucleon(nucleon, scale, centerX, centerY, progress) {
   context.globalAlpha = isParticipant ? 0.96 : 0.66;
   context.fill();
   context.globalAlpha = 1;
-  context.strokeStyle = nucleusColor(nucleon);
-  context.lineWidth = 0.8;
-  context.stroke();
+  context.strokeStyle = nucleusColor(nucleon); context.lineWidth = 0.8; context.stroke();
   if (isParticipant && participantReveal > 0) {
     context.shadowColor = theme("--participant", "#dc2626");
     context.shadowBlur = 8 * participantReveal;
     context.strokeStyle = theme("--participant", "#dc2626");
     context.lineWidth = 2.5 * participantReveal + 1;
-    context.beginPath();
-    context.arc(x, y, radius + 3, 0, Math.PI * 2);
-    context.stroke();
+    context.beginPath(); context.arc(x, y, radius + 3, 0, Math.PI * 2); context.stroke();
     context.shadowBlur = 0;
   }
   if (isParticipant && nucleon.collisions > 1 && radius >= 5 && participantReveal > 0.75) {
-    context.fillStyle = "#fff";
-    context.font = "700 8px system-ui";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
+    context.fillStyle = "#fff"; context.font = "700 8px system-ui"; context.textAlign = "center"; context.textBaseline = "middle";
     context.fillText(String(nucleon.collisions), x, y);
   }
   context.restore();
@@ -292,8 +263,7 @@ function drawNucleon(nucleon, scale, centerX, centerY, progress) {
 function drawNoCollisionMessage(width, height) {
   context.save();
   context.fillStyle = theme("--warning", "#a35a00");
-  context.font = "800 19px system-ui";
-  context.textAlign = "center";
+  context.font = "800 19px system-ui"; context.textAlign = "center";
   context.fillText("Ядра пролетіли повз — взаємодій немає", width / 2, height - 35);
   context.restore();
 }
@@ -302,15 +272,14 @@ function draw() {
   const width = canvas.clientWidth || 900;
   const height = Number.parseFloat(canvas.style.height) || 560;
   context.clearRect(0, 0, width, height);
-  context.fillStyle = theme("--viz-panel", "#fff");
-  context.fillRect(0, 0, width, height);
-  const centerX = width / 2;
-  const centerY = height / 2 + 18;
+  context.fillStyle = theme("--viz-panel", "#fff"); context.fillRect(0, 0, width, height);
+  const centerX = width / 2; const centerY = height / 2 + 18;
   if (!currentEvent) return;
   const maxFm = computeBounds(currentEvent);
   const scale = Math.min((width * 0.43) / maxFm, (height * 0.39) / maxFm);
+  lastTransform = { scale, centerX, centerY };
   drawGrid(width, height, scale, centerX, centerY);
-  drawImpactArrow(currentEvent, scale, centerX);
+  drawImpactArrow(currentEvent, scale, centerX, centerY);
   drawEnvelope(-currentEvent.impactParameterFm / 2, currentEvent.system.projectile, scale, centerX, centerY, "projectile");
   drawEnvelope(currentEvent.impactParameterFm / 2, currentEvent.system.target, scale, centerX, centerY, "target");
   drawCollisionRegion(currentEvent, scale, centerX, centerY, animationProgress);
@@ -333,6 +302,7 @@ function animate(timestamp) {
   animationProgress = Math.min(1, (timestamp - animationStart) / duration);
   setStage(animationProgress < 0.32 ? 1 : animationProgress < 0.72 ? 2 : 3);
   draw();
+  window.dispatchEvent(new CustomEvent("glauber:animation", { detail: { progress: animationProgress } }));
   if (animationProgress < 1) animationFrameId = requestAnimationFrame(animate);
 }
 
@@ -346,24 +316,29 @@ function replayAnimation() {
 }
 
 function updateResults() {
-  const eventMetrics = currentEvent.metrics;
-  metrics.nPart.textContent = String(eventMetrics.nPart);
-  metrics.nColl.textContent = String(eventMetrics.nColl);
-  metrics.spectators.textContent = String(eventMetrics.nSpectators);
-  metrics.epsilon2.textContent = eventMetrics.epsilon2.toFixed(3);
-  metrics.epsilon3.textContent = eventMetrics.epsilon3.toFixed(3);
-  metrics.area.textContent = `${eventMetrics.participantAreaFm2.toFixed(2)} fm²`;
+  const m = currentEvent.metrics;
+  metrics.nPart.textContent = String(m.nPart);
+  metrics.nColl.textContent = String(m.nColl);
+  metrics.spectators.textContent = String(m.nSpectators);
+  metrics.epsilon2.textContent = m.epsilon2 === null ? "—" : m.epsilon2.toFixed(3);
+  metrics.epsilon3.textContent = m.epsilon3 === null ? "—" : m.epsilon3.toFixed(3);
+  metrics.area.textContent = m.participantAreaFm2 === null ? "—" : `${m.participantAreaFm2.toFixed(2)} fm²`;
   metrics.b.textContent = `${currentEvent.impactParameterFm.toFixed(2)} fm`;
-  metrics.channels.textContent = `${eventMetrics.nCollPP}/${eventMetrics.nCollPN}/${eventMetrics.nCollNN}`;
+  metrics.channels.textContent = `${m.nCollPP}/${m.nCollPN}/${m.nCollNN}`;
+  const centrality = geometricCentralityPercent(currentEvent);
+  metrics.centrality.textContent = centrality === null ? "—" : `${centrality.toFixed(1)}% · ${centralityLabel(centrality)}`;
+  const validation = validateGlauberEvent(currentEvent);
+  metrics.validation.textContent = validation.valid ? "Пройдено" : `${validation.errors.length} помилок`;
+  metrics.validation.className = validation.valid ? "ok" : "warning";
   text.eventIdentity.textContent = `${currentEvent.system.label}, seed ${currentEvent.seed}, подія ${currentEvent.trialId}`;
   text.eventBadge.dataset.state = currentEvent.accepted ? "ok" : "warning";
   text.eventBadge.textContent = currentEvent.accepted ? "ЗІТКНЕННЯ" : "ПРОЛІТ ПОВЗ";
   text.status.dataset.state = currentEvent.accepted ? "ok" : "warning";
   if (currentEvent.accepted) {
-    text.plainSummary.innerHTML = `<strong>${eventMetrics.nPart} із ${currentEvent.projectile.length + currentEvent.target.length}</strong> нуклонів стали учасниками. Вони утворили <strong>${eventMetrics.nColl}</strong> парних взаємодій, а <strong>${eventMetrics.nSpectators}</strong> нуклонів пролетіли повз.`;
+    text.plainSummary.innerHTML = `<strong>${m.nPart} із ${currentEvent.projectile.length + currentEvent.target.length}</strong> нуклонів стали учасниками. Вони утворили <strong>${m.nColl}</strong> парних взаємодій, а <strong>${m.nSpectators}</strong> нуклонів пролетіли повз.`;
     text.status.textContent = `Зіткнення відбулося при b = ${currentEvent.impactParameterFm.toFixed(2)} fm.`;
   } else {
-    text.plainSummary.innerHTML = "За такого розташування центри ядер були зміщені настільки, що жодна пара нуклонів не підійшла достатньо близько.";
+    text.plainSummary.innerHTML = `За такого розташування центри ядер були зміщені настільки, що жодна пара нуклонів не підійшла достатньо близько.`;
     text.status.textContent = "Зменште b, виберіть центральну геометрію або увімкніть режим зіткнення.";
   }
   const attempts = currentEvent.searchAttempts || 1;
@@ -390,12 +365,13 @@ function buildEvent(startTrial) {
 function generate(startTrial = Number(controls.trial.value)) {
   buttons.generate.disabled = true;
   try {
-    currentEvent = buildEvent(startTrial);
+    currentEvent = normalizeGlauberEvent(buildEvent(startTrial));
     controls.trial.value = String(currentEvent.trialId);
     controls.impact.value = String(currentEvent.impactParameterFm);
     updateGeometryControls();
     updateResults();
     replayAnimation();
+    window.dispatchEvent(new CustomEvent("glauber:event", { detail: { event: currentEvent } }));
   } catch (error) {
     text.status.dataset.state = "warning";
     text.status.textContent = `Не вдалося знайти подію: ${error.message}`;
@@ -421,24 +397,46 @@ function exportEvent() {
   URL.revokeObjectURL(url);
 }
 
+function closestNucleon(clientX, clientY) {
+  if (!currentEvent || !lastTransform) return null;
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  let best = null;
+  for (const nucleon of [...currentEvent.projectile, ...currentEvent.target]) {
+    const px = lastTransform.centerX + nucleon.x * lastTransform.scale;
+    const py = lastTransform.centerY + nucleon.y * lastTransform.scale;
+    const distance = Math.hypot(px - x, py - y);
+    if (distance <= 12 && (!best || distance < best.distance)) best = { nucleon, distance, px, py };
+  }
+  return best;
+}
+
+function showTooltip(event) {
+  const hit = closestNucleon(event.clientX, event.clientY);
+  if (!hit) { tooltip.hidden = true; return; }
+  const { nucleon } = hit;
+  const nucleus = nucleon.nucleus === "projectile" ? "перше ядро" : "друге ядро";
+  const type = nucleon.type === "proton" ? "протон" : "нейтрон";
+  tooltip.innerHTML = `<strong>${type}</strong> · ${nucleus}<br>зіткнень: <strong>${nucleon.collisions}</strong><br>x=${nucleon.x.toFixed(2)} fm, y=${nucleon.y.toFixed(2)} fm`;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  tooltip.style.left = `${event.clientX - rect.left + 14}px`;
+  tooltip.style.top = `${event.clientY - rect.top + 14}px`;
+  tooltip.hidden = false;
+}
+
 fillSystems();
 updateSystemControls();
-controls.geometry.addEventListener("change", () => {
-  updateGeometryControls();
-  controls.trial.value = "0";
-  generate(0);
-});
+controls.geometry.addEventListener("change", () => { updateGeometryControls(); controls.trial.value = "0"; generate(0); });
 controls.impact.addEventListener("input", updateGeometryControls);
-controls.system.addEventListener("change", () => {
-  controls.trial.value = "0";
-  updateSystemControls();
-  generate(0);
-});
+controls.system.addEventListener("change", () => { controls.trial.value = "0"; updateSystemControls(); generate(0); });
 controls.acceptedOnly.addEventListener("change", () => generate(Number(controls.trial.value)));
 buttons.generate.addEventListener("click", () => generate(Number(controls.trial.value)));
 buttons.next.addEventListener("click", nextEvent);
 buttons.replay.addEventListener("click", replayAnimation);
 buttons.export.addEventListener("click", exportEvent);
 window.addEventListener("resize", resizeCanvas);
+canvas.addEventListener("pointermove", showTooltip);
+canvas.addEventListener("pointerleave", () => { tooltip.hidden = true; });
 resizeCanvas();
 generate(0);
