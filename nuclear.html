@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Навчальна візуалізація Monte Carlo Glauber для зіткнень p–O, O–O, Ne–Ne та Pb–Pb.">
-  <title>Algorithmic Universe — ядерна лабораторія</title>
+  <meta name="description" content="Algorithmic Universe Nuclear Web v0.6: Monte Carlo Glauber, пакетна статистика та чесна карта фізичних рівнів колайдера.">
+  <title>Algorithmic Universe — ядерна лабораторія v0.6</title>
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./nuclear.css">
 </head>
@@ -12,138 +12,240 @@
   <main class="app-shell nuclear-shell">
     <header class="app-header nuclear-header">
       <div>
-        <p class="eyebrow">Monte Carlo Glauber · ядерні зіткнення</p>
+        <p class="eyebrow">Algorithmic Universe · Collider Lab</p>
         <h1>Ядерна лабораторія</h1>
-        <p class="subtitle">Подивись, які протони й нейтрони реально беруть участь у зіткненні двох ядер, а які пролітають повз.</p>
+        <p class="subtitle">Від пучка і геометрії ядра до нуклонних субзіткнень — із чітким поділом між реалізованою фізикою та майбутніми PYTHIA/Geant4-рівнями.</p>
       </div>
       <div class="header-actions">
-        <span class="version-badge">Nuclear Web v0.5</span>
+        <span class="version-badge">Nuclear Web v0.6</span>
         <a class="nav-button" href="./index.html">Класична лабораторія</a>
       </div>
     </header>
 
-    <section class="how-it-works" aria-label="Як працює симуляція">
-      <div class="how-step"><span>1</span><div><strong>Створюємо ядра</strong><small>Розміщуємо протони й нейтрони за профілем густини.</small></div></div>
-      <div class="how-step"><span>2</span><div><strong>Задаємо зміщення b</strong><small>Чим більше b, тим ближче зіткнення до краю ядра.</small></div></div>
-      <div class="how-step"><span>3</span><div><strong>Шукаємо пари</strong><small>Близькі нуклони стають учасниками й утворюють Ncoll.</small></div></div>
+    <section class="pipeline-overview" aria-label="Ланцюг реального колайдера">
+      <article class="pipeline-card context"><span>1</span><div><strong>Пучки</strong><small>Джерело → інжектори → LHC</small></div><em>контекст</em></article>
+      <article class="pipeline-card implemented"><span>2</span><div><strong>Ядерна геометрія</strong><small>Ізотопи, нуклони, b</small></div><em>реалізовано</em></article>
+      <article class="pipeline-card implemented"><span>3</span><div><strong>NN-субзіткнення</strong><small>Npart, Ncoll, ε₂, ε₃</small></div><em>реалізовано</em></article>
+      <article class="pipeline-card planned"><span>4</span><div><strong>Кварки й адрони</strong><small>PYTHIA 8 / Angantyr</small></div><em>наступний рівень</em></article>
+      <article class="pipeline-card planned"><span>5</span><div><strong>Детектор</strong><small>Geant4 + reconstruction</small></div><em>наступний рівень</em></article>
     </section>
 
     <section class="science-notice">
-      <strong>Що моделюється:</strong> поперечна геометрія ядер у момент найближчого проходження. Кварки, глюони, плазма, адронізація та детектор ще не входять у цю версію.
+      <strong>Наукова чесність:</strong> ця версія реально обчислює класичну Monte Carlo Glauber-геометрію. Вона не вигадує кінцеві частинки, джети або сигнали детектора там, де ще немає підключеного генератора та Geant4.
     </section>
 
-    <section class="nuclear-dashboard">
-      <aside class="panel controls-panel" aria-labelledby="nuclearControlsHeading">
-        <h2 id="nuclearControlsHeading">Налаштування зіткнення</h2>
+    <nav class="mode-tabs" aria-label="Режим лабораторії">
+      <button class="mode-tab active" type="button" data-mode="event">Одна подія</button>
+      <button class="mode-tab" type="button" data-mode="batch">Серія подій і статистика</button>
+      <button class="mode-tab" type="button" data-mode="model">Модель і джерела</button>
+    </nav>
 
-        <div class="control-group">
-          <label for="systemSelect">Які ядра зіштовхнути</label>
-          <select id="systemSelect"></select>
-        </div>
-        <p id="systemDescription" class="system-description"></p>
+    <section id="eventMode" class="mode-panel">
+      <section class="nuclear-dashboard">
+        <aside class="panel controls-panel" aria-labelledby="nuclearControlsHeading">
+          <h2 id="nuclearControlsHeading">Налаштування зіткнення</h2>
 
-        <div class="control-group">
-          <label for="geometrySelect">Геометрія події</label>
-          <select id="geometrySelect">
-            <option value="central">Центральне — ядра проходять майже центрами</option>
-            <option value="mid" selected>Середнє — часткове перекриття</option>
-            <option value="edge">Крайове — торкаються краями</option>
-            <option value="random">Випадкове — фізичний розподіл за площею</option>
-            <option value="manual">Вручну — власне значення b</option>
-          </select>
-        </div>
-
-        <div id="impactControl" class="control-group impact-control" hidden>
-          <label class="control-label" for="impactParameter"><span>Зміщення центрів b</span><span id="impactValue" class="control-value">3.00 fm</span></label>
-          <input id="impactParameter" type="range" min="0" max="15" step="0.05" value="3">
-        </div>
-
-        <label class="checkbox-card">
-          <input id="acceptedOnly" type="checkbox" checked>
-          <span><strong>Показувати подію зі зіткненням</strong><small>Рекомендовано. Лабораторія пропускає порожні конфігурації, доки не знайде хоча б одну взаємодію.</small></span>
-        </label>
-
-        <details class="advanced-controls">
-          <summary>Розширені параметри</summary>
-          <div class="control-group two-controls">
-            <label>σNN, mb<input id="sigmaMb" type="number" min="10" max="150" step="0.5" value="68"></label>
-            <label>Seed<input id="nuclearSeed" type="number" min="0" step="1" value="20260725"></label>
-          </div>
           <div class="control-group">
-            <label>Номер події<input id="trialId" type="number" min="0" step="1" value="0"></label>
+            <label for="systemSelect">Які ядра зіштовхнути</label>
+            <select id="systemSelect"></select>
           </div>
-        </details>
+          <p id="systemDescription" class="system-description"></p>
 
-        <div class="button-grid nuclear-buttons">
-          <button id="generateEvent" class="primary wide" type="button">Згенерувати нове зіткнення</button>
-          <button id="nextEvent" type="button">Інша конфігурація</button>
-          <button id="replayEvent" type="button">Повторити анімацію</button>
-          <button id="exportNuclearEvent" class="wide" type="button">Експортувати JSON</button>
-        </div>
-
-        <div class="legend-list" aria-label="Легенда">
-          <span><i class="legend-shape circle projectile"></i> протон першого ядра</span>
-          <span><i class="legend-shape square projectile"></i> нейтрон першого ядра</span>
-          <span><i class="legend-shape circle target"></i> протон другого ядра</span>
-          <span><i class="legend-shape square target"></i> нейтрон другого ядра</span>
-          <span><i class="legend-shape participant-ring"></i> нуклон-учасник</span>
-          <span><i class="legend-line collision"></i> одна взаємодія Ncoll</span>
-        </div>
-      </aside>
-
-      <section class="simulation-column">
-        <div class="event-stage" aria-live="polite">
-          <div class="stage-item active" data-stage="1"><span>1</span> Конфігурація ядер</div>
-          <div class="stage-item" data-stage="2"><span>2</span> Пошук близьких пар</div>
-          <div class="stage-item" data-stage="3"><span>3</span> Результат зіткнення</div>
-        </div>
-        <div class="canvas-frame nuclear-canvas-frame">
-          <canvas id="nuclearCanvas" aria-label="Поперечна геометрія зіткнення двох ядер"></canvas>
-          <div class="canvas-caption">
-            <span><strong>Кружечок</strong> — протон, <strong>квадрат</strong> — нейтрон.</span>
-            <span><strong>Червона обводка</strong> — учасник, <strong>помаранчева лінія</strong> — одна взаємодія.</span>
+          <div class="control-group">
+            <label for="geometrySelect">Геометрія події</label>
+            <select id="geometrySelect">
+              <option value="central">Центральне — майже повне перекриття</option>
+              <option value="mid" selected>Середнє — часткове перекриття</option>
+              <option value="edge">Крайове — торкання периферій</option>
+              <option value="random">Випадкове minimum-bias</option>
+              <option value="manual">Вручну — власне значення b</option>
+            </select>
           </div>
-        </div>
-      </section>
 
-      <aside class="panel metrics-panel" aria-labelledby="nuclearMetricsHeading">
-        <div class="result-heading">
-          <div>
-            <h2 id="nuclearMetricsHeading">Що сталося</h2>
-            <p id="eventIdentity" class="event-identity"></p>
+          <div id="impactControl" class="control-group impact-control" hidden>
+            <label class="control-label" for="impactParameter"><span>Зміщення центрів b</span><span id="impactValue" class="control-value">3.00 fm</span></label>
+            <input id="impactParameter" type="range" min="0" max="15" step="0.05" value="3">
           </div>
-          <span id="eventBadge" class="event-badge">—</span>
-        </div>
 
-        <div class="primary-results">
-          <div class="primary-metric"><span id="nPartMetric">0</span><small>нуклонів взяли участь<br><strong>Npart</strong></small></div>
-          <div class="primary-metric"><span id="nCollMetric">0</span><small>пар взаємодіяли<br><strong>Ncoll</strong></small></div>
-          <div class="primary-metric"><span id="spectatorMetric">0</span><small>нуклонів пролетіли повз</small></div>
-        </div>
+          <label class="checkbox-card">
+            <input id="acceptedOnly" type="checkbox" checked>
+            <span><strong>Показувати подію зі зіткненням</strong><small>Для навчання порожні конфігурації пропускаються. У статистичному режимі вони враховуються обов’язково.</small></span>
+          </label>
 
-        <div id="plainSummary" class="plain-summary"></div>
-        <div id="nuclearStatus" class="status-box" aria-live="polite"></div>
+          <details class="advanced-controls">
+            <summary>Розширені параметри</summary>
+            <div class="control-group two-controls">
+              <label>σNN, mb<input id="sigmaMb" type="number" min="10" max="150" step="0.5" value="68"></label>
+              <label>Seed<input id="nuclearSeed" type="number" min="0" step="1" value="20260725"></label>
+            </div>
+            <div class="control-group">
+              <label>Номер події<input id="trialId" type="number" min="0" step="1" value="0"></label>
+            </div>
+          </details>
 
-        <details class="advanced-results">
-          <summary>Додаткові фізичні показники</summary>
-          <div class="metrics-grid nuclear-metrics">
-            <div class="metric"><div class="metric-label">Зміщення b</div><div id="bMetric" class="metric-value compact-value">0 fm</div></div>
-            <div class="metric"><div class="metric-label">Еліптичність ε₂</div><div id="epsilon2Metric" class="metric-value">0</div></div>
-            <div class="metric"><div class="metric-label">Трикутність ε₃</div><div id="epsilon3Metric" class="metric-value">0</div></div>
-            <div class="metric"><div class="metric-label">Площа учасників</div><div id="areaMetric" class="metric-value compact-value">0 fm²</div></div>
-            <div class="metric wide-metric"><div class="metric-label">Канали pp / pn / nn</div><div id="channelsMetric" class="metric-value compact-value">0/0/0</div></div>
+          <div class="button-grid nuclear-buttons">
+            <button id="generateEvent" class="primary wide" type="button">Згенерувати зіткнення</button>
+            <button id="nextEvent" type="button">Інша конфігурація</button>
+            <button id="replayEvent" type="button">Повторити анімацію</button>
+            <button id="exportNuclearEvent" class="wide" type="button">Експортувати JSON</button>
           </div>
-        </details>
 
-        <section class="explanation-card">
-          <h3>Як читати результат</h3>
-          <p><strong>Npart</strong> рахує унікальні протони й нейтрони, які хоча б раз взаємодіяли.</p>
-          <p><strong>Ncoll</strong> рахує всі пари взаємодій. Один нуклон може зіткнутися кілька разів, тому Ncoll може бути більшим за Npart.</p>
-          <p id="searchInfo"></p>
+          <div class="legend-list" aria-label="Легенда">
+            <span><i class="legend-shape circle projectile"></i> протон першого ядра</span>
+            <span><i class="legend-shape square projectile"></i> нейтрон першого ядра</span>
+            <span><i class="legend-shape circle target"></i> протон другого ядра</span>
+            <span><i class="legend-shape square target"></i> нейтрон другого ядра</span>
+            <span><i class="legend-shape participant-ring"></i> нуклон-учасник</span>
+            <span><i class="legend-line collision"></i> одна взаємодія Ncoll</span>
+          </div>
+        </aside>
+
+        <section class="simulation-column">
+          <div class="beamline-view" aria-label="Схематичний рух пучків уздовж осі LHC">
+            <div class="beam-track"><span class="beam-label">Пучок A</span><i id="beamA" class="beam-packet beam-a"></i><b>точка взаємодії</b><i id="beamB" class="beam-packet beam-b"></i><span class="beam-label">Пучок B</span></div>
+            <small>Схема вздовж осі пучка. Основне поле нижче — поперечний зріз у момент найближчого проходження.</small>
+          </div>
+
+          <div class="event-stage" aria-live="polite">
+            <div class="stage-item active" data-stage="1"><span>1</span> Конфігурація ядер</div>
+            <div class="stage-item" data-stage="2"><span>2</span> Пошук близьких пар</div>
+            <div class="stage-item" data-stage="3"><span>3</span> Результат Glauber</div>
+          </div>
+          <div class="canvas-frame nuclear-canvas-frame">
+            <canvas id="nuclearCanvas" tabindex="0" aria-label="Поперечна геометрія зіткнення двох ядер"></canvas>
+            <div id="nucleonTooltip" class="nucleon-tooltip" hidden></div>
+            <div class="canvas-caption">
+              <span><strong>Кружечок</strong> — протон, <strong>квадрат</strong> — нейтрон.</span>
+              <span><strong>Червона обводка</strong> — учасник, <strong>помаранчева лінія</strong> — одна NN-взаємодія.</span>
+            </div>
+          </div>
         </section>
-      </aside>
+
+        <aside class="panel metrics-panel" aria-labelledby="nuclearMetricsHeading">
+          <div class="result-heading">
+            <div>
+              <h2 id="nuclearMetricsHeading">Результат події</h2>
+              <p id="eventIdentity" class="event-identity"></p>
+            </div>
+            <span id="eventBadge" class="event-badge">—</span>
+          </div>
+
+          <div class="primary-results">
+            <div class="primary-metric"><span id="nPartMetric">0</span><small>нуклонів-учасників<br><strong>Npart</strong></small></div>
+            <div class="primary-metric"><span id="nCollMetric">0</span><small>парних взаємодій<br><strong>Ncoll</strong></small></div>
+            <div class="primary-metric"><span id="spectatorMetric">0</span><small>нуклонів-спостерігачів</small></div>
+          </div>
+
+          <div id="plainSummary" class="plain-summary"></div>
+          <div id="nuclearStatus" class="status-box" aria-live="polite"></div>
+
+          <div class="quality-grid">
+            <div><span>Геометрична центральність</span><strong id="centralityMetric">—</strong></div>
+            <div><span>Самоперевірка події</span><strong id="validationMetric">—</strong></div>
+          </div>
+
+          <details class="advanced-results" open>
+            <summary>Фізичні показники</summary>
+            <div class="metrics-grid nuclear-metrics">
+              <div class="metric"><div class="metric-label">Зміщення b</div><div id="bMetric" class="metric-value compact-value">0 fm</div></div>
+              <div class="metric"><div class="metric-label">Еліптичність ε₂</div><div id="epsilon2Metric" class="metric-value">—</div></div>
+              <div class="metric"><div class="metric-label">Трикутність ε₃</div><div id="epsilon3Metric" class="metric-value">—</div></div>
+              <div class="metric"><div class="metric-label">Площа учасників</div><div id="areaMetric" class="metric-value compact-value">—</div></div>
+              <div class="metric wide-metric"><div class="metric-label">Канали pp / pn / nn</div><div id="channelsMetric" class="metric-value compact-value">0/0/0</div></div>
+            </div>
+          </details>
+
+          <section class="explanation-card">
+            <h3>Як читати результат</h3>
+            <p><strong>Npart</strong> — унікальні нуклони, які взаємодіяли хоча б раз. <strong>Ncoll</strong> — кількість усіх парних NN-взаємодій.</p>
+            <p id="searchInfo"></p>
+          </section>
+        </aside>
+      </section>
+    </section>
+
+    <section id="batchMode" class="mode-panel" hidden>
+      <section class="batch-layout">
+        <aside class="panel batch-controls">
+          <h2>Minimum-bias серія</h2>
+          <p class="system-description">На відміну від навчального режиму, тут враховуються і зіткнення, і прольоти повз. Це потрібно для оцінки перерізу та статистичних розподілів.</p>
+          <div class="control-group">
+            <label for="batchSystem">Система</label>
+            <select id="batchSystem"></select>
+          </div>
+          <div class="control-group two-controls">
+            <label>Кількість trial-подій<input id="batchCount" type="number" min="50" max="5000" step="50" value="500"></label>
+            <label>Seed<input id="batchSeed" type="number" min="0" step="1" value="20260725"></label>
+          </div>
+          <button id="runBatch" class="primary wide" type="button">Запустити серію</button>
+          <progress id="batchProgress" max="100" value="0"></progress>
+          <p id="batchProgressText" class="system-description">Готово до запуску.</p>
+        </aside>
+
+        <section class="panel batch-results">
+          <div class="result-heading"><div><h2>Статистичний результат</h2><p id="batchIdentity" class="event-identity">Ще не запущено</p></div><span class="event-badge" id="batchBadge">BATCH</span></div>
+          <div class="batch-kpis">
+            <article><span id="batchAccepted">—</span><small>прийнятих зіткнень</small></article>
+            <article><span id="batchAcceptance">—</span><small>частка зіткнень</small></article>
+            <article><span id="batchCrossSection">—</span><small>геометричний переріз</small></article>
+            <article><span id="batchMeanNpart">—</span><small>середнє Npart</small></article>
+            <article><span id="batchMeanNcoll">—</span><small>середнє Ncoll</small></article>
+          </div>
+          <div class="batch-chart-card">
+            <h3>Npart і Ncoll за геометричною центральністю</h3>
+            <canvas id="batchChart" aria-label="Середні Npart і Ncoll у центральнісних інтервалах"></canvas>
+            <div class="chart-legend"><span><i class="chart-dot npart"></i>Npart</span><span><i class="chart-dot ncoll"></i>Ncoll</span></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Геом. інтервал</th><th>Trial</th><th>Зіткнення</th><th>⟨Npart⟩</th><th>⟨Ncoll⟩</th></tr></thead>
+              <tbody id="centralityTable"></tbody>
+            </table>
+          </div>
+          <div class="science-notice compact-notice"><strong>Важливо:</strong> це геометричні percentiles за b, а не експериментальна центральність, яку детектори визначають через вимірювані observables.</div>
+        </section>
+      </section>
+    </section>
+
+    <section id="modelMode" class="mode-panel" hidden>
+      <section class="model-layout">
+        <article class="panel model-card">
+          <h2>Що реально обчислюється</h2>
+          <ul>
+            <li>ізотоп і кількість протонів/нейтронів;</li>
+            <li>sampling нуклонів із MHO або Woods–Saxon профілю;</li>
+            <li>мінімальна відстань між нуклонами та shift-all recentering;</li>
+            <li>impact parameter із мірою dP/db ∝ b;</li>
+            <li>hard-sphere NN criterion через σNN;</li>
+            <li>Npart, Ncoll, pp/pn/nn, ε₂, ε₃, participant area;</li>
+            <li>minimum-bias переріз і статистична похибка.</li>
+          </ul>
+        </article>
+        <article class="panel model-card warning-card">
+          <h2>Що ще не реалізовано</h2>
+          <ul>
+            <li>точна магнітна оптика та bunch dynamics LHC;</li>
+            <li>TGlauber option 4 / correlated O-16 та Ne-20 configurations;</li>
+            <li>parton distribution functions і hard scattering;</li>
+            <li>QGP, hydrodynamics, hadronisation і decay chains;</li>
+            <li>Geant4 detector response, digitisation та reconstruction;</li>
+            <li>експериментальна centrality calibration.</li>
+          </ul>
+        </article>
+        <article class="panel model-card sources-card">
+          <h2>Первинні джерела моделі</h2>
+          <div id="sourceList" class="source-list"></div>
+        </article>
+        <article class="panel model-card">
+          <h2>Правило інтерпретації</h2>
+          <p>Візуалізація є подієвою Monte Carlo-моделлю, а не фотографією статичного ядра. Кожен запуск створює нову допустиму конфігурацію. Висновки роблять за ансамблем подій, а не за одним кадром.</p>
+          <p>Позначка <strong>«реалізовано»</strong> означає, що величина обчислюється кодом і перевіряється тестами. Позначка <strong>«наступний рівень»</strong> не створює декоративних фальшивих результатів.</p>
+        </article>
+      </section>
     </section>
   </main>
+
   <script type="module" src="./src/nuclear-app.js"></script>
+  <script type="module" src="./src/nuclear-analysis.js"></script>
 </body>
 </html>
