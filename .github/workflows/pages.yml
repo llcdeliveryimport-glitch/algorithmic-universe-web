@@ -1,7 +1,9 @@
-name: Deploy Algorithmic Universe Web
+name: Test and deploy Algorithmic Universe Web
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -11,14 +13,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  test:
+    name: Browser physics and static checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -29,6 +29,31 @@ jobs:
           node-version: "22"
       - name: Run browser physics tests
         run: npm test
+      - name: Validate required public files
+        run: |
+          test -f nuclear.html
+          test -f nuclear.css
+          test -f src/glauber.js
+          test -f src/collider.js
+          test -f src/nuclear-app.js
+          test -f src/nuclear-analysis.js
+          test -f validation/v0.6-reference.json
+          node --check src/glauber.js
+          node --check src/collider.js
+          node --check src/nuclear-app.js
+          node --check src/nuclear-analysis.js
+
+  deploy:
+    name: Deploy GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: test
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site
