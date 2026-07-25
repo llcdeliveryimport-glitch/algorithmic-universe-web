@@ -1,0 +1,45 @@
+{
+  "version": "0.6-web-preview",
+  "generatedAt": "2026-07-25",
+  "seed": 20260725,
+  "purpose": "Deterministic browser-engine reference run; not an LHC prediction.",
+  "model": "classical-monte-carlo-glauber-minimum-bias",
+  "runs": [
+    {
+      "system": "pO",
+      "trials": 2000,
+      "accepted": 200,
+      "crossSectionBarn": 0.4523893421169302,
+      "crossSectionErrorBarn": 0.030303120085061774,
+      "meanNpart": 3.475,
+      "meanNcoll": 2.475
+    },
+    {
+      "system": "OO",
+      "trials": 2000,
+      "accepted": 395,
+      "crossSectionBarn": 1.3960264306414655,
+      "crossSectionErrorBarn": 0.06288197948992107,
+      "meanNpart": 10.29620253164557,
+      "meanNcoll": 12.39240506329114
+    },
+    {
+      "system": "NeNe",
+      "trials": 2000,
+      "accepted": 447,
+      "crossSectionBarn": 1.7975051578757148,
+      "crossSectionErrorBarn": 0.07485280945880283,
+      "meanNpart": 12.14765100671141,
+      "meanNcoll": 15.194630872483222
+    },
+    {
+      "system": "PbPb",
+      "trials": 500,
+      "accepted": 207,
+      "crossSectionBarn": 8.128870991413016,
+      "crossSectionErrorBarn": 0.4324914208400761,
+      "meanNpart": 111.22705314009662,
+      "meanNcoll": 376.3961352657005
+    }
+  ]
+}
