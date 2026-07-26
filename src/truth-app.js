@@ -223,7 +223,7 @@ ui.canvas.addEventListener("pointerleave", () => { ui.tooltip.hidden = true; });
 
 for (const element of [ui.view, ui.minPt, ui.maxEta, ui.charge, ui.categories, ui.logMode]) element.addEventListener("input", update);
 ui.reset.addEventListener("click", () => {
-  ui.view.value = "transverse"; ui.minPt.value = "0"; ui.maxEta.value = "8"; ui.charge.value = "all";
+  ui.view.value = "transverse"; ui.minPt.value = "0"; ui.maxEta.value = "32"; ui.charge.value = "all";
   for (const box of ui.categories.querySelectorAll("input")) box.checked = true;
   update();
 });
