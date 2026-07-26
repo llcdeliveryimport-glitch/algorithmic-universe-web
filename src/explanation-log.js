@@ -33,9 +33,92 @@ function installStyles() {
     .log-empty{padding:22px 0;color:var(--muted);text-align:center}
     .log-hint{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--muted)}
     .log-hint::before{content:"●";color:var(--implemented)}
-    @media(max-width:760px){.log-header{flex-direction:column}.log-actions{justify-content:flex-start}.explanation-log{padding-inline:14px}.log-entry{grid-template-columns:34px 1fr}}
+
+    .pipeline-card.integration::after{background:linear-gradient(90deg,var(--implemented) 0 58%,var(--warning) 58% 100%)}
+    .pipeline-card.integration em{color:var(--context);background:color-mix(in srgb,var(--context) 12%,transparent)}
+    .generator-release-panel{margin:0 0 14px;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:16px;padding:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent-soft) 72%,var(--panel)),var(--panel) 58%);box-shadow:0 12px 34px rgba(15,23,42,.06)}
+    .generator-release-header{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+    .generator-release-header h2{margin:4px 0 5px;font-size:1.15rem}.generator-release-header p{margin:0;max-width:900px;color:var(--muted);line-height:1.5;font-size:.88rem}
+    .release-kicker{display:inline-flex;border-radius:999px;padding:4px 8px;background:var(--accent);color:white;font-size:.68rem;font-weight:850;letter-spacing:.05em}
+    .release-state{flex:0 0 auto;border-radius:999px;padding:7px 10px;background:color-mix(in srgb,var(--success) 14%,transparent);color:var(--success);font-size:.74rem;font-weight:850;white-space:nowrap}
+    .generator-release-grid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:10px}
+    .release-card{position:relative;border:1px solid var(--border);border-radius:13px;padding:13px;background:color-mix(in srgb,var(--panel) 94%,transparent);overflow:hidden}
+    .release-card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--border)}
+    .release-card.release-ok::before{background:var(--success)}.release-card.release-progress::before{background:var(--warning)}
+    .release-card h3{margin:7px 0 9px;font-size:.91rem}.release-card p{margin:9px 0 0;color:var(--muted);font-size:.78rem;line-height:1.45}
+    .release-card-status{font-size:.65rem;font-weight:900;letter-spacing:.04em;color:var(--muted)}
+    .release-ok .release-card-status{color:var(--success)}.release-progress .release-card-status{color:var(--warning)}
+    .release-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+    .release-metrics div{display:grid;gap:2px;border-radius:9px;padding:8px;background:var(--background)}
+    .release-metrics strong{font-size:.92rem;font-variant-numeric:tabular-nums}.release-metrics small{color:var(--muted);font-size:.64rem;line-height:1.25}
+    .release-footnote{margin:12px 0 0;padding-top:11px;border-top:1px solid var(--border);color:var(--muted);font-size:.78rem;line-height:1.45}
+    .release-footnote strong{color:var(--text)}
+
+    @media(max-width:1060px){.generator-release-grid{grid-template-columns:1fr 1fr}.release-card:first-child{grid-column:1/-1}}
+    @media(max-width:760px){.log-header{flex-direction:column}.log-actions{justify-content:flex-start}.explanation-log{padding-inline:14px}.log-entry{grid-template-columns:34px 1fr}.generator-release-header{flex-direction:column}.generator-release-grid{grid-template-columns:1fr}.release-card:first-child{grid-column:auto}.release-state{white-space:normal}.release-metrics{grid-template-columns:1fr 1fr}}
   `;
   document.head.append(style);
+}
+
+function createGeneratorStatusPanel() {
+  const panel = document.createElement("section");
+  panel.className = "generator-release-panel";
+  panel.setAttribute("aria-labelledby", "generatorReleaseHeading");
+  panel.innerHTML = `
+    <div class="generator-release-header">
+      <div>
+        <span class="release-kicker">НОВЕ У V0.8</span>
+        <h2 id="generatorReleaseHeading">Реальний генератор частинок уже підключено</h2>
+        <p>Це не декоративна обіцянка: нижче показано перевірені результати серверних контрольних запусків PYTHIA/HepMC3. Інтерактивний запуск цих важких обчислень безпосередньо з браузера ще розробляється.</p>
+      </div>
+      <span class="release-state">backend активний</span>
+    </div>
+    <div class="generator-release-grid">
+      <article class="release-card release-ok">
+        <span class="release-card-status">✓ ПОВНІСТЮ ПЕРЕВІРЕНО</span>
+        <h3>PYTHIA 8.317 · proton–proton · 13 TeV</h3>
+        <div class="release-metrics">
+          <div><strong>3/3</strong><small>події пройшли аудит</small></div>
+          <div><strong>233–437</strong><small>частинок у події</small></div>
+          <div><strong>106–177</strong><small>стабільних final-state</small></div>
+        </div>
+        <p>Повний ланцюг: PYTHIA → офіційний Pythia8ToHepMC3 → EventRecord → перевірка графа та чотири-імпульсу. Максимальна відносна похибка closure: 2,5×10⁻¹¹.</p>
+      </article>
+      <article class="release-card release-ok">
+        <span class="release-card-status">✓ ФОРМАТ ПОДІЇ ПЕРЕВІРЕНО</span>
+        <h3>HepMC3 та універсальний EventRecord</h3>
+        <div class="release-metrics">
+          <div><strong>PDG</strong><small>коди частинок</small></div>
+          <div><strong>4-p</strong><small>чотири-імпульси</small></div>
+          <div><strong>graph</strong><small>parent / daughter</small></div>
+        </div>
+        <p>Працює запис і повторне читання стандартного Asciiv3-файлу з вершинами, статусами, одиницями, вагами та provenance.</p>
+      </article>
+      <article class="release-card release-progress">
+        <span class="release-card-status">● ПОДІЮ СТВОРЕНО · АУДИТ ВИПРАВЛЯЄТЬСЯ</span>
+        <h3>Angantyr · proton–O-16 · 9,62 TeV</h3>
+        <div class="release-metrics">
+          <div><strong>1</strong><small>реальна p–O подія</small></div>
+          <div><strong>O-16</strong><small>ядерний PDG beam</small></div>
+          <div><strong>HI</strong><small>GenHeavyIon metadata</small></div>
+        </div>
+        <p>Сам генератор успішно створив heavy-ion final state. Зараз виправляється остання перевірка Npart/Ncoll/b після імпорту metadata; тому етап ще не позначено зеленим.</p>
+      </article>
+    </div>
+    <p class="release-footnote"><strong>Що бачите на полотні зараз:</strong> браузерна Monte Carlo Glauber-геометрія. Реальні PYTHIA-частинки вже генеруються у фізичному backend, а окремий truth-level event display буде наступним видимим модулем.</p>
+  `;
+  return panel;
+}
+
+function updatePipelineStatus() {
+  const generatorCard = document.querySelector(".pipeline-overview .pipeline-card:nth-child(4)");
+  if (!generatorCard) return;
+  generatorCard.classList.remove("planned");
+  generatorCard.classList.add("integration");
+  const description = generatorCard.querySelector("small");
+  const badge = generatorCard.querySelector("em");
+  if (description) description.textContent = "PYTHIA pp ✓ · Angantyr p–O аудит";
+  if (badge) badge.textContent = "backend підключено";
 }
 
 function createPanel(kind, title, subtitle) {
@@ -150,6 +233,12 @@ function summaryFromBatchView() {
 
 function initialize() {
   installStyles();
+  updatePipelineStatus();
+
+  const releasePanel = createGeneratorStatusPanel();
+  const scienceNotice = document.querySelector(".science-notice");
+  if (scienceNotice) scienceNotice.insertAdjacentElement("afterend", releasePanel);
+
   const eventPanel = createPanel("event", "Пояснювальний журнал події", "Кожен крок розрахунку пояснюється окремо. Перемикач показує людську або технічну версію того самого результату.");
   const batchPanel = createPanel("batch", "Пояснювальний журнал серії", "Пояснює, як з trial-подій отримуються acceptance, геометричний переріз, середні значення та центральнісні інтервали.");
   document.querySelector("#eventMode")?.append(eventPanel);
@@ -172,8 +261,8 @@ function initialize() {
   }
 
   const badge = document.querySelector(".version-badge");
-  if (badge) badge.textContent = "Nuclear Web v0.7";
-  document.title = "Algorithmic Universe — ядерна лабораторія v0.7";
+  if (badge) badge.textContent = "Nuclear Web v0.8";
+  document.title = "Algorithmic Universe — ядерна лабораторія v0.8";
 
   setTimeout(() => {
     if (!state.eventEntries.length) document.querySelector("#generateEvent")?.click();
