@@ -33,6 +33,8 @@ jobs:
         run: |
           test -f nuclear.html
           test -f nuclear.css
+          test -f truth.html
+          test -f truth.css
           test -f src/glauber.js
           test -f src/collider.js
           test -f src/model-v06.js
@@ -40,10 +42,15 @@ jobs:
           test -f src/nuclear-analysis.js
           test -f src/explanations.js
           test -f src/explanation-log.js
+          test -f src/truth-event.js
+          test -f src/truth-app.js
+          test -f data/angantyr-po-9.62tev-event0-compact.json
           test -f tests/explanations.test.mjs
+          test -f tests/truth-event.test.mjs
           test -f validation/v0.6-reference.json
           grep -q "Nuclear Web v0.6" nuclear.html
           grep -q "Серія подій і статистика" nuclear.html
+          grep -q "Truth Web v0.9" truth.html
           grep -q 'import "./explanation-log.js"' src/nuclear-analysis.js
           grep -q "Пояснювальний журнал події" src/explanation-log.js
           node --check src/glauber.js
@@ -53,6 +60,14 @@ jobs:
           node --check src/nuclear-analysis.js
           node --check src/explanations.js
           node --check src/explanation-log.js
+          node --check src/truth-event.js
+          node --check src/truth-app.js
+          node - <<'NODE'
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('data/angantyr-po-9.62tev-event0-compact.json', 'utf8'));
+          if (data.schema !== 'au-truth-v0.1') throw new Error('wrong truth schema');
+          if (!Array.isArray(data.p) || data.p.length !== 499) throw new Error('truth particle count mismatch');
+          NODE
 
   deploy:
     name: Deploy GitHub Pages
