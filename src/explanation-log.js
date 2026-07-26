@@ -34,8 +34,8 @@ function installStyles() {
     .log-hint{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--muted)}
     .log-hint::before{content:"●";color:var(--implemented)}
 
-    .pipeline-card.integration::after{background:linear-gradient(90deg,var(--implemented) 0 58%,var(--warning) 58% 100%)}
-    .pipeline-card.integration em{color:var(--context);background:color-mix(in srgb,var(--context) 12%,transparent)}
+    .pipeline-card.integration::after{background:var(--implemented)}
+    .pipeline-card.integration em{color:var(--implemented);background:color-mix(in srgb,var(--implemented) 12%,transparent)}
     .generator-release-panel{margin:0 0 14px;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:16px;padding:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent-soft) 72%,var(--panel)),var(--panel) 58%);box-shadow:0 12px 34px rgba(15,23,42,.06)}
     .generator-release-header{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
     .generator-release-header h2{margin:4px 0 5px;font-size:1.15rem}.generator-release-header p{margin:0;max-width:900px;color:var(--muted);line-height:1.5;font-size:.88rem}
@@ -67,11 +67,11 @@ function createGeneratorStatusPanel() {
   panel.innerHTML = `
     <div class="generator-release-header">
       <div>
-        <span class="release-kicker">НОВЕ У V0.8</span>
+        <span class="release-kicker">НОВЕ У V0.8.1</span>
         <h2 id="generatorReleaseHeading">Реальний генератор частинок уже підключено</h2>
-        <p>Це не декоративна обіцянка: нижче показано перевірені результати серверних контрольних запусків PYTHIA/HepMC3. Інтерактивний запуск цих важких обчислень безпосередньо з браузера ще розробляється.</p>
+        <p>Це не декоративна обіцянка: нижче показано перевірені результати серверних контрольних запусків PYTHIA, Angantyr і HepMC3. Інтерактивний запуск цих важких обчислень безпосередньо з браузера ще розробляється.</p>
       </div>
-      <span class="release-state">backend активний</span>
+      <span class="release-state">backend перевірено</span>
     </div>
     <div class="generator-release-grid">
       <article class="release-card release-ok">
@@ -94,18 +94,18 @@ function createGeneratorStatusPanel() {
         </div>
         <p>Працює запис і повторне читання стандартного Asciiv3-файлу з вершинами, статусами, одиницями, вагами та provenance.</p>
       </article>
-      <article class="release-card release-progress">
-        <span class="release-card-status">● ПОДІЮ СТВОРЕНО · АУДИТ ВИПРАВЛЯЄТЬСЯ</span>
+      <article class="release-card release-ok">
+        <span class="release-card-status">✓ ПОВНІСТЮ ПЕРЕВІРЕНО</span>
         <h3>Angantyr · proton–O-16 · 9,62 TeV</h3>
         <div class="release-metrics">
-          <div><strong>1</strong><small>реальна p–O подія</small></div>
-          <div><strong>O-16</strong><small>ядерний PDG beam</small></div>
-          <div><strong>HI</strong><small>GenHeavyIon metadata</small></div>
+          <div><strong>3</strong><small>нуклонів-учасників Npart</small></div>
+          <div><strong>2</strong><small>NN-субзіткнення Ncoll</small></div>
+          <div><strong>2,43 fm</strong><small>параметр удару b</small></div>
         </div>
-        <p>Сам генератор успішно створив heavy-ion final state. Зараз виправляється остання перевірка Npart/Ncoll/b після імпорту metadata; тому етап ще не позначено зеленим.</p>
+        <p>Непружна p–O подія пройшла повний аудит: 1529 частинок, 891 вершина, 499 стабільних кінцевих частинок. Відносна похибка чотири-імпульсу: 3,51×10⁻¹¹.</p>
       </article>
     </div>
-    <p class="release-footnote"><strong>Що бачите на полотні зараз:</strong> браузерна Monte Carlo Glauber-геометрія. Реальні PYTHIA-частинки вже генеруються у фізичному backend, а окремий truth-level event display буде наступним видимим модулем.</p>
+    <p class="release-footnote"><strong>Що бачите на полотні зараз:</strong> браузерна Monte Carlo Glauber-геометрія. Реальні PYTHIA та Angantyr частинки вже генеруються у фізичному backend, а окремий truth-level event display буде наступним видимим модулем.</p>
   `;
   return panel;
 }
@@ -117,8 +117,8 @@ function updatePipelineStatus() {
   generatorCard.classList.add("integration");
   const description = generatorCard.querySelector("small");
   const badge = generatorCard.querySelector("em");
-  if (description) description.textContent = "PYTHIA pp ✓ · Angantyr p–O аудит";
-  if (badge) badge.textContent = "backend підключено";
+  if (description) description.textContent = "PYTHIA pp ✓ · Angantyr p–O ✓";
+  if (badge) badge.textContent = "backend перевірено";
 }
 
 function createPanel(kind, title, subtitle) {
@@ -261,8 +261,8 @@ function initialize() {
   }
 
   const badge = document.querySelector(".version-badge");
-  if (badge) badge.textContent = "Nuclear Web v0.8";
-  document.title = "Algorithmic Universe — ядерна лабораторія v0.8";
+  if (badge) badge.textContent = "Nuclear Web v0.8.1";
+  document.title = "Algorithmic Universe — ядерна лабораторія v0.8.1";
 
   setTimeout(() => {
     if (!state.eventEntries.length) document.querySelector("#generateEvent")?.click();
