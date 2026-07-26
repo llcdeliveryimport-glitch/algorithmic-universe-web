@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Truth-level display реальної PYTHIA 8.317 / Angantyr p-O події з HepMC3.">
+  <title>Algorithmic Universe — Truth Event Display v0.9</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./truth.css">
+</head>
+<body>
+  <main class="app-shell truth-shell">
+    <header class="app-header truth-header">
+      <div>
+        <p class="eyebrow">Algorithmic Universe · PYTHIA / Angantyr / HepMC3</p>
+        <h1>Truth-level подія p–O</h1>
+        <p class="subtitle">499 реальних стабільних кінцевих частинок із перевіреної Angantyr-події — з фільтрами, кінематикою та пояснювальним журналом.</p>
+      </div>
+      <div class="header-actions">
+        <span class="version-badge">Truth Web v0.9</span>
+        <a class="nav-button" href="./nuclear.html">← Ядерна геометрія</a>
+      </div>
+    </header>
+
+    <section class="truth-pipeline" aria-label="Ланцюг події">
+      <article><span>1</span><strong>Glauber / Angantyr</strong><small>Npart=3 · Ncoll=2 · b=2,43 fm</small></article>
+      <article><span>2</span><strong>PYTHIA 8.317</strong><small>партонні підподії та адронізація</small></article>
+      <article><span>3</span><strong>HepMC3</strong><small>1529 частинок · 891 вершина</small></article>
+      <article><span>4</span><strong>Stable final state</strong><small>499 частинок зі status 1</small></article>
+      <article class="planned"><span>5</span><strong>Geant4 / detector</strong><small>ще не застосовано</small></article>
+    </section>
+
+    <section class="truth-notice"><strong>Що означає truth-level:</strong> це частинки, які створив фізичний генератор до проходження крізь детектор. Промені на екрані не є виміряними треками ATLAS або CMS.</section>
+
+    <section class="truth-layout">
+      <aside class="panel truth-controls">
+        <h2>Фільтри події</h2>
+        <label>Вид
+          <select id="viewMode"><option value="transverse">Поперечний імпульс pT–φ</option><option value="etaPhi">Карта η–φ</option></select>
+        </label>
+        <label>Мінімальний pT <strong id="minPtValue">0.00 GeV</strong>
+          <input id="minPt" type="range" min="0" max="3" step="0.05" value="0">
+        </label>
+        <label>Діапазон псевдошвидкості <strong id="maxEtaValue">|η| ≤ 8.0</strong>
+          <input id="maxEta" type="range" min="1" max="10" step="0.5" value="8">
+        </label>
+        <label>Електричний заряд
+          <select id="chargeFilter"><option value="all">усі</option><option value="charged">лише заряджені</option><option value="neutral">лише нейтральні</option><option value="positive">позитивні</option><option value="negative">негативні</option></select>
+        </label>
+        <div id="categoryFilters" class="truth-filter-list"></div>
+        <button id="resetFilters" type="button">Скинути фільтри</button>
+        <div id="datasetValidation" class="truth-validation">Завантаження перевіреної події…</div>
+      </aside>
+
+      <section class="truth-main">
+        <div class="truth-kpis">
+          <article><span id="visibleMetric">—</span><small>видимих частинок</small></article>
+          <article><span id="chargedMetric">—</span><small>заряджених</small></article>
+          <article><span id="neutralMetric">—</span><small>нейтральних</small></article>
+          <article><span id="maxPtMetric">—</span><small>найбільший pT</small></article>
+        </div>
+        <div class="truth-canvas-card">
+          <canvas id="truthCanvas" aria-label="Truth-level частинки Angantyr p-O події"></canvas>
+          <div id="truthTooltip" class="truth-tooltip" hidden></div>
+          <div class="truth-legend">
+            <span><i class="photon"></i>фотони</span><span><i class="charged"></i>заряджені мезони</span><span><i class="neutral"></i>нейтральні мезони</span><span><i class="baryon"></i>баріони</span><span><i class="lepton"></i>лептони</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel truth-side">
+        <h2>Склад фінального стану</h2>
+        <div class="truth-table-wrap"><table><thead><tr><th>Частинка</th><th>PDG</th><th>N</th><th>⟨pT⟩</th></tr></thead><tbody id="speciesTable"></tbody></table></div>
+        <div class="truth-event-facts">
+          <h3>Параметри події</h3>
+          <p><strong>Система:</strong> p–O-16</p><p><strong>√sNN:</strong> 9,62 TeV</p><p><strong>Npart:</strong> 3</p><p><strong>Ncoll:</strong> 2</p><p><strong>b:</strong> 2,4305 fm</p><p><strong>Seed:</strong> 20260725</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel truth-log-panel">
+      <div class="truth-log-header"><div><h2>Пояснювальний журнал truth-події</h2><p>Показує, звідки взялися частинки та що саме перевірено.</p></div><label>Рівень пояснення<select id="logMode"><option value="plain">простими словами</option><option value="technical">технічний лог</option></select></label></div>
+      <div id="truthLog" class="truth-log"></div>
+    </section>
+  </main>
+  <script type="module" src="./src/truth-app.js"></script>
+</body>
+</html>
